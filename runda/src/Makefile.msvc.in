@@ -1,0 +1,53 @@
+CC = cl.exe
+CXXC = cl.exe
+LINK=link.exe
+
+CFLAGS = /EHsc /O2 /GL /GA /Ob2 /nologo /W3 /MT /Zi /wd4800 /wd4305 /wd4244
+LDFLAGS = /nologo /OPT:REF /OPT:ICF /LTCG /NXCOMPAT /DYNAMICBASE /MACHINE:X86 ADVAPI32.LIB
+DEFS =  -D_CRT_SECURE_NO_DEPRECATE -DRUNDA_USE_THREAD \
+        -DDLL_EXPORT -DHAVE_GETENV -DHAVE_WINDOWS_H -DDIC_VERSION=@DIC_VERSION@ \
+        -DVERSION="\"@VERSION@\"" -DPACKAGE="\"runda\"" \
+        -DUNICODE -D_UNICODE \
+        -DRUNDA_DEFAULT_RC="\"c:\\Program Files\\runda\\etc\\rundarc\""
+INC = -I. -I..
+DEL = del
+
+OBJ =   feature_index.obj param.obj  learner.obj string_buffer.obj \
+	char_property.obj         learner_tagger.obj    tagger.obj \
+	connector.obj             tokenizer.obj \
+	context_id.obj            dictionary.obj  utils.obj \
+	dictionary_compiler.obj   viterbi.obj \
+	dictionary_generator.obj  writer.obj iconv_utils.obj \
+	dictionary_rewriter.obj   lbfgs.obj eval.obj nbest_generator.obj
+
+.c.obj:
+	$(CC) $(CFLAGS) $(INC) $(DEFS) -c  $<
+
+.cpp.obj:
+	$(CC) $(CFLAGS) $(INC) $(DEFS) -c  $<
+
+all: librunda runda runda-dict-index runda-dict-gen runda-cost-train runda-system-eval runda-test-gen
+
+runda: $(OBJ) runda.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda.obj librunda.lib
+
+runda-dict-index: $(OBJ) runda-dict-index.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda-dict-index.obj librunda.lib
+
+runda-dict-gen: $(OBJ) runda-dict-gen.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda-dict-gen.obj librunda.lib
+
+runda-cost-train: $(OBJ) runda-cost-train.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda-cost-train.obj librunda.lib
+
+runda-system-eval: $(OBJ) runda-system-eval.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda-system-eval.obj librunda.lib
+
+runda-test-gen: runda-test-gen.obj
+	$(LINK) $(LDFLAGS) /out:$@.exe runda-test-gen.obj librunda.lib
+
+librunda: $(OBJ) librunda.obj
+	$(LINK) $(LDFLAGS) /out:$@.dll $(OBJ) librunda.obj /dll
+
+clean:
+	$(DEL) *.exe *.obj *.dll *.a *.lib *.o *.exp *.def
